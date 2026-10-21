@@ -38,7 +38,7 @@ export function JourneyStepper() {
                 <span className={`grid h-8 w-8 place-items-center rounded-full border-2 transition ${i <= stop ? "border-coral bg-coral text-white" : "border-ink/15 bg-paper text-ink-soft"} ${on ? "scale-110 shadow-md" : ""}`}>
                   <StepIcon className="h-4 w-4" aria-hidden />
                 </span>
-                <span className={`text-[0.65rem] font-semibold leading-tight ${on ? "text-ink" : "text-ink-soft"}`}>{j.title.replace("The ", "")}</span>
+                <span className={`text-[0.65rem] font-semibold leading-tight ${on ? "text-ink" : "text-ink-soft"}`}>{j.short}</span>
               </button>
             );
           })}
@@ -55,10 +55,10 @@ export function JourneyStepper() {
             transition={{ duration: 0.22 }}
           >
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-coral">
-              Stop {stop + 1} of {journey.length} · {current.subtitle}
+              Stop {stop + 1} of {journey.length} · {current.title}
             </p>
             <h3 className="mt-1 flex items-center gap-2 font-display text-2xl font-bold">
-              <Icon className="h-5 w-5 text-coral" aria-hidden /> {current.title}
+              <Icon className="h-5 w-5 text-coral" aria-hidden /> {current.subtitle}
             </h3>
             <p className="mt-2 leading-relaxed">{current.text}</p>
             <ul className="mt-3 flex flex-wrap gap-1.5">
@@ -100,9 +100,8 @@ export function JourneyList() {
             <span className="grid h-9 w-9 place-items-center rounded-full bg-coral text-white">
               <Icon className="h-4 w-4" aria-hidden />
             </span>
-            <p className="mt-3 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-coral">Stop {i + 1}</p>
-            <h3 className="font-display text-lg font-bold">{j.title}</h3>
-            <p className="text-xs font-medium text-ink-soft">{j.subtitle}</p>
+            <p className="mt-3 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-coral">Stop {i + 1} · {j.title}</p>
+            <h3 className="font-display text-lg font-bold leading-snug">{j.subtitle}</h3>
             <p className="mt-2 text-sm leading-relaxed">{j.text}</p>
           </li>
         );

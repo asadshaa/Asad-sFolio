@@ -60,6 +60,40 @@ Interactive demos (all clearly labelled as illustrative, browser-only):
 Aureus ERP module map, POS cart/stock/SQL-sync simulation, Skill-Bridge
 skill-gap analysis with sample data, Fabric Classification pipeline overview.
 
+## Editing the 3D models
+
+Every model is built in code, but each one is also available as an editable
+**`.glb`** file in **`assets/models/`** (opens in Blender: *File → Import →
+glTF 2.0*). To regenerate those files after changing code, run the dev server
+and open **http://localhost:3000/dev/models** — it re-exports everything
+(dev-only; disabled in production).
+
+| File | What it is | Notes |
+| --- | --- | --- |
+| `car.glb` | The player car | Front faces **+Z**. Wheel nodes `Wheel_FL`, `Wheel_FR`, `Wheel_RL`, `Wheel_RR` (origin at the wheel centre) spin and steer. Materials named `TailLight` glow when braking, `Paint` turns gold for the Konami easter egg. |
+| `landmark-home.glb` … `landmark-lighthouse.glb` | The six destination buildings | **+Z faces the road**, X runs along it. Keep the footprint inside the flat pad (radius ≈ 6–8.5). Project displays and the CV kiosk are added separately from the config, so leave space in front. |
+| `tree-pine`, `tree-broadleaf`, `rock`, `grass-tuft`, `flower`, `street-lamp`, `road-post`, `cloud`, `token` | Instanced scenery | Drawn hundreds of times — keep them low-poly. Base at the origin, **+Y up**. Each instance gets a random scale/rotation and a slight colour tint. `street-lamp`: the arm points along **+Z** (toward the road). |
+| `world-reference.glb` | Planet, road and water | Reference for scale only — the terrain drives the physics, so it can't be swapped. |
+
+Scale: **1 unit ≈ 1 metre** (the car is ~2.3 long, trees ~2–4 tall).
+
+**To use your own version:**
+
+1. Edit a file from `assets/models/` in Blender.
+2. Export as **glTF Binary (.glb)** (keep "+Y Up" enabled; apply transforms).
+3. Save it in **`public/models/`**, e.g. `public/models/car.glb`.
+4. Point the model at it in **`src/config/models.ts`**:
+   ```ts
+   export const MODEL_OVERRIDES = {
+     car: "/models/car.glb",
+   };
+   ```
+
+If a file is missing or fails to load, the site logs a warning and uses the
+built-in model, so a bad export never breaks the page. Collisions are defined
+in `src/config/world.ts` (`colliders` per destination): if you make a building
+much bigger or smaller, adjust them there.
+
 ## 2. Run locally
 
 Requires Node.js ≥ 20.9.

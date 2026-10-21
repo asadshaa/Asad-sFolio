@@ -30,7 +30,7 @@ export function ProjectCard({ project: p, headingLevel = 3 }: { project: Project
           </span>
         ))}
       </div>
-      <span className="sr-only">Open case study</span>
+      <span className="text-sm font-semibold text-coral group-hover:underline">{p.cta} →</span>
     </Link>
   );
 }

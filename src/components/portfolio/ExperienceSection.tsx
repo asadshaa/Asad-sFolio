@@ -48,6 +48,38 @@ export function ExperienceSection({ headingLevel = 3 }: { headingLevel?: 2 | 3 }
                 </ul>
               </div>
             )}
+            {e.contributions && e.contributions.length > 0 && (
+              <div className="mt-4 space-y-2.5">
+                <Eyebrow>Contributions in detail</Eyebrow>
+                {e.contributions.map((c) => (
+                  <details key={c.title} className="group rounded-2xl border border-ink/10 bg-white/65 p-4">
+                    <summary className="cursor-pointer list-none font-semibold">
+                      {c.title}
+                      <span className="ml-2 text-xs font-normal text-ink-soft group-open:hidden">Show details</span>
+                    </summary>
+                    <dl className="mt-3 grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[8.5rem_1fr]">
+                      {(
+                        [
+                          ["Problem", c.problem],
+                          ["My role", c.role],
+                          ["Technologies", c.technologies.length ? c.technologies.join(", ") : null],
+                          ["Implementation", c.implementation],
+                          ["Validation", c.validation],
+                          ["Outcome", c.outcome],
+                        ] as [string, string | null][]
+                      )
+                        .filter(([, v]) => v)
+                        .map(([k, v]) => (
+                          <div key={k} className="contents">
+                            <dt className="font-semibold text-ink-soft">{k}</dt>
+                            <dd>{v}</dd>
+                          </div>
+                        ))}
+                    </dl>
+                  </details>
+                ))}
+              </div>
+            )}
             {showTodos && sparse && e.kind === "work" && (
               <p className="todo mt-2 text-xs">Dev note: add verified responsibilities / deliverables for this role in src/config/portfolio.ts.</p>
             )}

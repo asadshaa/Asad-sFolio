@@ -1,7 +1,7 @@
 import { skillLevels, skills, type SkillLevel } from "@/config/portfolio";
 
-const LEVEL_ORDER: SkillLevel[] = ["comfortable", "working", "learning"];
-const DOTS: Record<SkillLevel, number> = { comfortable: 3, working: 2, learning: 1 };
+const LEVEL_ORDER: SkillLevel[] = ["experienced", "working", "learning"];
+const DOTS: Record<SkillLevel, number> = { experienced: 3, working: 2, learning: 1 };
 
 /** Skills grouped by honest experience level — no percentage bars. */
 export function SkillsSection({ headingLevel = 3 }: { headingLevel?: 2 | 3 }) {
