@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #1d2230;
+  --color-ink-soft: #4a5163;
+  --color-paper: #fbf6ee;
+  --color-sand: #f1e6d4;
+  --color-coral: #d9472f;
+  --color-coral-soft: #f08c6f;
+  --color-gold: #f2b84b;
+  --color-moss: #3f6b52;
+  --color-sky: #a6c8e4;
+
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-float: 0 18px 50px -18px rgb(29 34 48 / 0.45), 0 2px 8px -2px rgb(29 34 48 / 0.18);
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible, consistent keyboard focus everywhere. */
+:focus-visible {
+  outline: 3px solid var(--color-coral);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.glass {
+  background: rgb(251 246 238 / 0.84);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgb(255 255 255 / 0.65);
+  box-shadow: var(--shadow-float);
+}
+
+.glass-dark {
+  background: rgb(29 34 48 / 0.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  color: #fbf6ee;
+}
+
+.kbd {
+  display: inline-flex;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.4rem;
+  border-radius: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgb(255 255 255 / 0.9);
+  color: var(--color-ink);
+  box-shadow: inset 0 -2px 0 rgb(29 34 48 / 0.18);
+}
+
+.todo {
+  border: 1.5px dashed rgb(217 71 47 / 0.45);
+  background: rgb(217 71 47 / 0.05);
+  color: var(--color-ink-soft);
+  font-style: italic;
+  border-radius: 0.6rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.scroll-soft {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(29 34 48 / 0.25) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
