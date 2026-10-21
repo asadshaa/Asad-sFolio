@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, Brain, Cloud, Code2, Compass, FileText, LayoutGrid, Mail, Palette, Play, User } from "lucide-react";
-import { cvLink, profile, sectionMeta, sectionOrder, type SectionId } from "@/config/portfolio";
+import { cvLink, hero, profile, sectionMeta, sectionOrder, type SectionId } from "@/config/portfolio";
 import { DESTINATIONS } from "@/config/world";
 import { travelTo } from "@/lib/travel";
 import { displayName } from "@/lib/content";
 import { useGame } from "@/state/gameStore";
 import { sound } from "@/lib/audio";
+import { readableAccent } from "@/lib/color";
 
 const SECTION_ICONS: Record<SectionId, typeof User> = {
   about: User,
@@ -33,7 +34,7 @@ function QuickAccess({ variant }: { variant: "card" | "chips" }) {
           const Icon = SECTION_ICONS[id];
           return (
             <button key={id} type="button" onClick={() => travelTo(id)} className="glass inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold text-ink">
-              <Icon className="h-4 w-4" style={{ color: accentOf(id) }} aria-hidden /> {sectionMeta[id].title}
+              <Icon className="h-4 w-4" style={{ color: readableAccent(accentOf(id), "#ffffff") }} aria-hidden /> {sectionMeta[id].title}
             </button>
           );
         })}
@@ -49,7 +50,7 @@ function QuickAccess({ variant }: { variant: "card" | "chips" }) {
           return (
             <li key={id}>
               <button type="button" onClick={() => travelTo(id)} className="group flex w-full items-center gap-3 rounded-2xl px-2.5 py-2 text-left transition hover:bg-white/80">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white shadow-sm" style={{ color: accentOf(id) }}>
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white shadow-sm" style={{ color: readableAccent(accentOf(id), "#ffffff") }}>
                   <Icon className="h-[1.05rem] w-[1.05rem]" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -75,6 +76,7 @@ export function IntroOverlay({ touch }: { touch: boolean }) {
   const phase = useGame((s) => s.phase);
   const start = useGame((s) => s.startDriving);
   const name = displayName(profile.name);
+  const cv = cvLink();
 
   return (
     <AnimatePresence>
@@ -87,14 +89,16 @@ export function IntroOverlay({ touch }: { touch: boolean }) {
           exit={{ opacity: 0, y: 16, transition: { duration: 0.35 } }}
           className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:justify-start sm:px-10 sm:pb-12"
         >
-          <div className="pointer-events-auto max-w-md">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ink/70">Full-stack software developer</p>
-            <h1 id="intro-title" className="mt-2 font-display text-5xl font-extrabold leading-[0.95] tracking-tight text-ink drop-shadow-[0_2px_12px_rgba(255,255,255,0.6)] sm:text-6xl">
+          <div className="pointer-events-auto w-full max-w-md rounded-[1.75rem] border border-white/70 bg-paper/92 p-6 shadow-[var(--shadow-float)] backdrop-blur-md sm:w-auto">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-coral">{hero.eyebrow}</p>
+            <h1 id="intro-title" className="mt-2 font-display text-4xl font-extrabold leading-[0.95] tracking-tight text-ink sm:text-5xl">
               {name}
             </h1>
-            <p className="mt-3 font-display text-xl text-ink/80">{profile.headline}</p>
+            <p className="mt-2 text-sm font-semibold text-ink-soft">{profile.title}</p>
+            <p className="mt-4 font-display text-xl font-bold leading-snug text-ink">{hero.heading}</p>
+            <p className="mt-2 hidden text-sm leading-relaxed text-ink-soft sm:block">{hero.supporting}</p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
                 autoFocus
@@ -102,31 +106,40 @@ export function IntroOverlay({ touch }: { touch: boolean }) {
                   sound.start();
                   start();
                 }}
-                className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3.5 font-semibold text-white shadow-lg shadow-coral/30 transition hover:-translate-y-0.5 hover:bg-coral/90"
+                className="inline-flex items-center gap-2 rounded-full bg-coral px-5 py-3 font-semibold text-white shadow-lg shadow-coral/30 transition hover:-translate-y-0.5 hover:bg-coral/90"
               >
-                <Play className="h-4 w-4 fill-current" aria-hidden /> Start Driving
+                <Play className="h-4 w-4 fill-current" aria-hidden /> {hero.primaryCta}
               </button>
               <Link
-                href="/portfolio"
-                className="glass inline-flex items-center gap-2 rounded-full px-5 py-3.5 font-semibold text-ink transition hover:-translate-y-0.5"
+                href="/portfolio#featured"
+                className="inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-3 font-semibold text-ink transition hover:-translate-y-0.5"
               >
-                <LayoutGrid className="h-4 w-4" aria-hidden /> View Portfolio
+                <LayoutGrid className="h-4 w-4" aria-hidden /> {hero.secondaryCta}
               </Link>
+              {cv && (
+                <a
+                  href={cv}
+                  download
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-3 font-semibold text-ink-soft underline-offset-4 transition hover:text-ink hover:underline"
+                >
+                  <FileText className="h-4 w-4" aria-hidden /> {hero.cvCta}
+                </a>
+              )}
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-ink/75">
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-ink-soft">
               {!touch && (
                 <span className="flex items-center gap-1.5">
                   <span className="kbd">W</span>
                   <span className="kbd">A</span>
                   <span className="kbd">S</span>
                   <span className="kbd">D</span>
-                  <span className="ml-1">/ Arrow Keys to Drive</span>
+                  <span className="ml-1">or arrow keys to drive</span>
                 </span>
               )}
               {touch && <span>Use the on-screen pedals and wheel to drive</span>}
               <span className="flex items-center gap-1.5">
-                <Compass className="h-4 w-4" aria-hidden /> Explore to Discover
+                <Compass className="h-4 w-4" aria-hidden /> {touch ? hero.hint : hero.interactHint}
               </span>
             </div>
             <div className="lg:hidden">

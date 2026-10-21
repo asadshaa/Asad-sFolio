@@ -7,6 +7,7 @@ import { useGame } from "@/state/gameStore";
 import { CaseStudy } from "./CaseStudy";
 import { StatusBadge } from "./StatusBadge";
 import { ConceptMockup } from "./ConceptMockup";
+import { textOn } from "@/lib/color";
 
 /**
  * In-game project browser for a destination. Selecting a project shows its
@@ -61,7 +62,7 @@ export function ProjectBrowser({ section, intro }: { section: SectionId; intro?:
                           {gallery && concept ? (
                             <ConceptMockup kind={concept.mockup} accent={p.accent} label={p.name} />
                           ) : (
-                            <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold text-white" style={{ background: p.accent }}>
+                            <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl font-display text-sm font-bold" style={{ background: p.accent, color: textOn(p.accent) }}>
                               {String(i + 1).padStart(2, "0")}
                             </span>
                           )}

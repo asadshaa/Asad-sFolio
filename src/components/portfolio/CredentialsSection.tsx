@@ -7,7 +7,7 @@ export function CredentialsSection() {
     <ul className="grid gap-2.5 sm:grid-cols-2">
       {credentials.map((c) => (
         <li key={c.id} className="flex gap-3 rounded-2xl border border-ink/8 bg-white/65 p-4">
-          <Award className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden />
+          <Award className="mt-0.5 h-5 w-5 shrink-0 text-gold-deep" aria-hidden />
           <div className="min-w-0">
             <p className="font-semibold leading-snug">{c.title}</p>
             <p className="text-sm text-ink-soft">{[c.issuer, c.date].filter(Boolean).join(" · ")}</p>

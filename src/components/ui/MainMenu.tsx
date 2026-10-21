@@ -9,6 +9,7 @@ import { DESTINATIONS } from "@/config/world";
 import { useGame } from "@/state/gameStore";
 import { requests } from "@/state/runtime";
 import { travelTo } from "@/lib/travel";
+import { textOn } from "@/lib/color";
 
 /** Two-step "reset saved progress" control (state resets when the menu closes). */
 function ResetProgress() {
@@ -111,7 +112,7 @@ export function MainMenu() {
                       onClick={() => travelTo(id)}
                       className="flex w-full items-center gap-3 rounded-2xl bg-white/55 px-3 py-2.5 text-left transition hover:bg-white"
                     >
-                      <span className="grid h-8 w-8 place-items-center rounded-xl text-white" style={{ background: accent }}>
+                      <span className="grid h-8 w-8 place-items-center rounded-xl" style={{ background: accent, color: textOn(accent ?? "#d9472f") }}>
                         {seen ? <Check className="h-4 w-4" aria-hidden /> : <MapPin className="h-4 w-4" aria-hidden />}
                       </span>
                       <span className="flex-1">

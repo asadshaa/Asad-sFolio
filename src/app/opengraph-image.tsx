@@ -55,8 +55,8 @@ export default function OpengraphImage() {
           <div style={{ position: "absolute", left: 136, top: 74, width: 44, height: 44, borderRadius: 22, background: "#23262d", display: "flex" }} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", padding: "70px 80px" }}>
-          <div style={{ fontSize: 26, letterSpacing: 6, color: "#d9472f", fontWeight: 700, textTransform: "uppercase" }}>
-            Full-stack software developer
+          <div style={{ fontSize: 26, letterSpacing: 6, color: "#b83a24", fontWeight: 700, textTransform: "uppercase" }}>
+            Software Engineer · Exploring Cloud & DevOps
           </div>
           <div style={{ fontSize: 88, fontWeight: 800, color: "#1d2230", marginTop: 12, letterSpacing: -2 }}>{name}</div>
           <div style={{ fontSize: 38, color: "#4a5163", marginTop: 8 }}>{profile.headline}</div>

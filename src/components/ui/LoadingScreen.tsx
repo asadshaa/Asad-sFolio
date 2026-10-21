@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { profile } from "@/config/portfolio";
+import { gameCopy, profile } from "@/config/portfolio";
 import { displayName } from "@/lib/content";
 
 /**
@@ -48,7 +48,7 @@ export function LoadingScreen({ progress, leaving = false }: { progress: number;
           </svg>
         </div>
         <p className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
-          {pct < 100 ? "Building the world" : "Ready"} · {pct}%
+          {pct < 100 ? gameCopy.loading : "Ready"} · {pct}%
         </p>
       </div>
 

@@ -3,31 +3,29 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Car, X } from "lucide-react";
-import { sectionMeta, sectionOrder, type SectionId } from "@/config/portfolio";
+import { gameCopy, sectionMeta, sectionOrder, type SectionId } from "@/config/portfolio";
 import { DESTINATIONS } from "@/config/world";
 import { useGame } from "@/state/gameStore";
 import { travelTo } from "@/lib/travel";
 import { AboutPanel } from "./AboutPanel";
 import { ProjectBrowser } from "./ProjectBrowser";
 import { ContactSection } from "./ContactSection";
+import { readableAccent } from "@/lib/color";
 
 function Body({ id }: { id: SectionId }) {
   switch (id) {
     case "about":
       return <AboutPanel />;
     case "projects":
-      return <ProjectBrowser section="projects" intro="Business systems and applications. Pick one to open its case study — the camera will pull up to its screen." />;
+      return <ProjectBrowser section="projects" intro={sectionMeta.projects.intro} />;
     case "devops":
       return (
-        <ProjectBrowser
-          section="devops"
-          intro="Hands-on learning labs for cloud, containers, CI/CD, automation and monitoring. These are labs, kept separate from production software."
-        />
+        <ProjectBrowser section="devops" intro={sectionMeta.devops.intro} />
       );
     case "research":
-      return <ProjectBrowser section="research" intro="Machine-learning projects and AI experiments — each labelled with how far along it is." />;
+      return <ProjectBrowser section="research" intro={sectionMeta.research.intro} />;
     case "creative":
-      return <ProjectBrowser section="creative" intro="Selected concepts & freelance work. Every entry is labelled honestly: concepts and proposals are never presented as completed client projects." />;
+      return <ProjectBrowser section="creative" intro={sectionMeta.creative.intro} />;
     case "contact":
       return <ContactSection />;
   }
@@ -80,7 +78,7 @@ export function PortfolioPanel() {
             <div aria-hidden className="absolute inset-x-0 top-0 h-1.5" style={{ background: accent }} />
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em]" style={{ color: accent }}>
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em]" style={{ color: readableAccent(accent) }}>
                   {sectionMeta[active].place}
                 </p>
                 <h2 id="panel-title" ref={heading} tabIndex={-1} className="mt-1 font-display text-3xl font-bold tracking-tight outline-none">
@@ -106,7 +104,7 @@ export function PortfolioPanel() {
               onClick={close}
               className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-ink/85"
             >
-              <Car className="h-4 w-4" aria-hidden /> Return to driving
+              <Car className="h-4 w-4" aria-hidden /> {gameCopy.returnPrompt}
               <span className="kbd ml-1 hidden !bg-white/20 !text-paper !shadow-none md:inline-flex">Esc</span>
             </button>
             {nextId && (
