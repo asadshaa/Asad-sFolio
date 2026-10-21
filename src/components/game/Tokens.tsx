@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
-import { InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion, TorusGeometry, Vector3 } from "three";
+import { InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion, Vector3 } from "three";
+import { tokenGeometry } from "@/lib/three/props";
 import { TOKENS } from "@/config/world";
 import { getWorld } from "@/lib/world/world";
 import { sound } from "@/lib/audio";
 import { vehicle } from "@/state/runtime";
 import { useGame } from "@/state/gameStore";
+import { PropAsset, type PropAssetData } from "./ModelSlot";
 
 const Y = new Vector3(0, 1, 0);
 
@@ -16,35 +18,38 @@ const Y = new Vector3(0, 1, 0);
  * few hidden off-road). Purely optional: nothing is gated behind them.
  * One instanced mesh; collected tokens are scaled to zero.
  */
+const tokenAsset = () => ({
+  geometry: tokenGeometry(),
+  material: new MeshStandardMaterial({
+    color: "#e3b04b",
+    emissive: "#f2a93a",
+    emissiveIntensity: 0.2,
+    metalness: 0.9,
+    roughness: 0.25,
+  }),
+});
+
 export function Tokens({ reducedMotion }: { reducedMotion: boolean }) {
+  return (
+    <PropAsset name="token" reveal={false} build={tokenAsset}>
+      {(a) => <TokenLayer asset={a} reducedMotion={reducedMotion} />}
+    </PropAsset>
+  );
+}
+
+function TokenLayer({ asset, reducedMotion }: { asset: PropAssetData; reducedMotion: boolean }) {
   const tokens = getWorld().tokens;
   const { mesh, base, ups } = useMemo(() => {
-    const geo = new TorusGeometry(0.26, 0.09, 6, 6);
-    const mat = new MeshStandardMaterial({
-      color: "#f2c14e",
-      emissive: "#f2a93a",
-      emissiveIntensity: 0.35,
-      metalness: 0.7,
-      roughness: 0.3,
-      flatShading: true,
-    });
-    const m = new InstancedMesh(geo, mat, tokens.length);
+    const m = new InstancedMesh(asset.geometry, asset.material, tokens.length);
     m.frustumCulled = false;
     m.castShadow = true;
     // Orientation: stand upright on the local surface.
     const upDirs = tokens.map((t) => t.position.clone().normalize());
     const baseQ = upDirs.map((u) => new Quaternion().setFromUnitVectors(Y, u));
     return { mesh: m, base: baseQ, ups: upDirs };
-  }, [tokens]);
+  }, [tokens, asset]);
 
-  useEffect(
-    () => () => {
-      mesh.geometry.dispose();
-      (mesh.material as MeshStandardMaterial).dispose();
-      mesh.dispose();
-    },
-    [mesh],
-  );
+  useEffect(() => () => mesh.dispose(), [mesh]);
 
   const scratch = useMemo(() => ({ m: new Matrix4(), q: new Quaternion(), spin: new Quaternion(), p: new Vector3(), s: new Vector3() }), []);
 

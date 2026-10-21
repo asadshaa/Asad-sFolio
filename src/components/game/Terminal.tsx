@@ -181,7 +181,7 @@ export function Terminal() {
       case "skills":
         print(
           <div>
-            {(["comfortable", "working", "learning"] as const).map((lvl) => (
+            {(["experienced", "working", "learning"] as const).map((lvl) => (
               <div key={lvl} className="mb-1">
                 <div className="text-gold">{skillLevels[lvl].label}</div>
                 {skills

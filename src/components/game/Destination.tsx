@@ -19,7 +19,9 @@ import { travelTo } from "@/lib/travel";
 import { getWorld, type LandmarkFrame, type MilestoneData } from "@/lib/world/world";
 import { vehicle } from "@/state/runtime";
 import { useGame } from "@/state/gameStore";
-import { Cabin, CloudDistrict, CreativeStudio, Lighthouse, Observatory, Workshop } from "./Landmarks";
+import { Cabin, CloudDistrict, CreativeStudio, LandmarkInteractives, Lighthouse, Observatory, Workshop } from "./Landmarks";
+import { ModelSlot } from "./ModelSlot";
+import { LANDMARK_MODEL } from "@/config/models";
 import { landmarkMaterials, textTexture } from "./landmarkMaterials";
 
 const _up = new Vector3(0, 1, 0);
@@ -220,7 +222,10 @@ export function Destinations() {
             matrix={l.matrix}
             matrixAutoUpdate={false}
           >
-            <LandmarkModel landmark={l} />
+            <ModelSlot name={LANDMARK_MODEL[l.id]}>
+              <LandmarkModel landmark={l} />
+            </ModelSlot>
+            <LandmarkInteractives id={l.id} />
             <Beacon landmark={l} />
           </group>
           <ZoneMarker landmark={l} />

@@ -9,6 +9,7 @@ import { getWorld } from "@/lib/world/world";
 import { travelTo } from "@/lib/travel";
 import { vehicle } from "@/state/runtime";
 import { useGame } from "@/state/gameStore";
+import { textOn } from "@/lib/color";
 
 /* Equirectangular projection of the planet: the road loop becomes a winding band. */
 const W = 360;
@@ -234,7 +235,7 @@ export function WorldMapOverlay() {
                 return (
                   <li key={id}>
                     <button type="button" onClick={() => travelTo(id)} className="flex w-full items-center gap-3 rounded-2xl bg-white/60 px-3 py-2.5 text-left transition hover:bg-white">
-                      <span className="grid h-8 w-8 place-items-center rounded-xl text-white" style={{ background: accent }}>
+                      <span className="grid h-8 w-8 place-items-center rounded-xl" style={{ background: accent, color: textOn(accent) }}>
                         {seen ? <Check className="h-4 w-4" aria-hidden /> : <MapPin className="h-4 w-4" aria-hidden />}
                       </span>
                       <span>

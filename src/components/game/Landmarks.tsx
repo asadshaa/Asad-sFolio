@@ -8,6 +8,7 @@ import { DISPLAY_LAYOUT, displayArc, displayedProjects } from "@/config/world";
 import { travelTo } from "@/lib/travel";
 import { useGame } from "@/state/gameStore";
 import { landmarkMaterials, textTexture } from "./landmarkMaterials";
+import { textOn } from "@/lib/color";
 
 /*
  * Procedural landmark models. Local frame: y = up, +z faces the road,
@@ -40,7 +41,7 @@ function Cyl({
 }) {
   return (
     <mesh position={position} rotation={rotation} material={material as never} castShadow={cast} receiveShadow>
-      <cylinderGeometry args={[args[0], args[1], args[2], args[3] ?? 12]} />
+      <cylinderGeometry args={[args[0], args[1], args[2], Math.max(args[3] ?? 24, 16)]} />
     </mesh>
   );
 }
@@ -88,8 +89,26 @@ function Sign({ text, bg, color, position, width = 3.2, height = 0.62 }: { text:
   return (
     <mesh position={position}>
       <planeGeometry args={[width, height]} />
-      <meshStandardMaterial map={tex} emissiveMap={tex} emissive="#ffffff" emissiveIntensity={0.45} />
+      <meshStandardMaterial map={tex} emissiveMap={tex} emissive="#ffffff" emissiveIntensity={0.25} roughness={0.6} />
     </mesh>
+  );
+}
+
+/** A framed window: trim surround, sill, glazing and a cross mullion. */
+function Window({ position, width, height, cool = false }: { position: V3; width: number; height: number; cool?: boolean }) {
+  const m = landmarkMaterials();
+  const t = 0.05;
+  return (
+    <group position={position}>
+      <Box args={[width, height, 0.04]} position={[0, 0, 0.01]} material={cool ? m.windowCool : m.windowWarm} cast={false} />
+      <Box args={[width + t * 2, t, 0.08]} position={[0, height / 2 + t / 2, 0.03]} material={m.trim} cast={false} />
+      <Box args={[width + t * 2, t, 0.08]} position={[0, -height / 2 - t / 2, 0.03]} material={m.trim} cast={false} />
+      <Box args={[t, height, 0.08]} position={[-width / 2 - t / 2, 0, 0.03]} material={m.trim} cast={false} />
+      <Box args={[t, height, 0.08]} position={[width / 2 + t / 2, 0, 0.03]} material={m.trim} cast={false} />
+      <Box args={[0.025, height, 0.05]} position={[0, 0, 0.035]} material={m.trim} cast={false} />
+      <Box args={[width, 0.025, 0.05]} position={[0, 0, 0.035]} material={m.trim} cast={false} />
+      <Box args={[width + 0.2, 0.05, 0.14]} position={[0, -height / 2 - t, 0.07]} material={m.trim} cast={false} />
+    </group>
   );
 }
 
@@ -141,8 +160,8 @@ function ProjectDisplay({
     () =>
       textTexture(
         [
-          { text: style === "frame" ? "CONCEPT" : `0${index + 1}`.slice(-2), size: 30, color: "rgba(255,255,255,0.75)", weight: 700 },
-          { text: project.name, size: project.name.length > 22 ? 38 : 50, color: "#ffffff", weight: 800 },
+          { text: style === "frame" ? "CONCEPT" : `0${index + 1}`.slice(-2), size: 30, color: textOn(project.accent), weight: 700 },
+          { text: project.name, size: project.name.length > 22 ? 38 : 50, color: textOn(project.accent), weight: 800 },
         ],
         { width: 512, height: 320, bg: project.accent },
       ),
@@ -162,8 +181,8 @@ function ProjectDisplay({
     const g = useGame.getState();
     if (g.phase === "driving" || g.phase === "panel") travelTo(section, { projectId: project.id });
   };
-  const glow = hover || selected ? 1.15 : 0.7;
-  const face = <meshStandardMaterial map={texture} emissiveMap={texture} emissive="#ffffff" emissiveIntensity={glow} toneMapped={false} />;
+  const glow = hover || selected ? 0.75 : 0.4;
+  const face = <meshStandardMaterial map={texture} emissiveMap={texture} emissive="#ffffff" emissiveIntensity={glow} roughness={0.35} />;
   const yaw = -position[0] * 0.09;
 
   if (style === "container") {
@@ -262,14 +281,24 @@ export function Cabin({ accent }: { accent: string }) {
       </mesh>
       <Box args={[0.55, 1.4, 0.55]} position={[1.05, 3.3, -1.2]} material={m.stoneDark} />
       <Smoke position={[1.05, 4.05, -1.2]} />
-      <Box args={[0.75, 1.35, 0.06]} position={[0, 0.85, 0.82]} material={m.woodDark} />
-      <Box args={[0.75, 0.6, 0.06]} position={[-1.1, 1.3, 0.82]} material={m.windowWarm} cast={false} />
-      <Box args={[0.75, 0.6, 0.06]} position={[1.1, 1.3, 0.82]} material={m.windowWarm} cast={false} />
+      <Box args={[0.88, 1.46, 0.05]} position={[0, 0.88, 0.81]} material={m.trim} cast={false} />
+      <Box args={[0.75, 1.35, 0.07]} position={[0, 0.85, 0.83]} material={m.woodDark} />
+      <mesh position={[0.27, 0.85, 0.88]} material={m.chrome}>
+        <sphereGeometry args={[0.035, 12, 8]} />
+      </mesh>
+      <Window position={[-1.1, 1.3, 0.81]} width={0.8} height={0.64} />
+      <Window position={[1.1, 1.3, 0.81]} width={0.8} height={0.64} />
       <Box args={[4, 0.14, 1.3]} position={[0, 0.22, 1.45]} material={m.woodDark} />
       {[-1.8, 1.8].map((x) => (
         <Cyl key={x} args={[0.07, 0.07, 1.8, 6]} position={[x, 1.1, 2.0]} material={m.wood} />
       ))}
       <Box args={[4.1, 0.1, 1.5]} position={[0, 2.05, 1.5]} rotation={[0.18, 0, 0]} material={m.roofRed} />
+      {/* porch railing */}
+      <Box args={[1.25, 0.05, 0.05]} position={[-1.15, 0.78, 2.05]} material={m.wood} />
+      <Box args={[1.25, 0.05, 0.05]} position={[1.15, 0.78, 2.05]} material={m.wood} />
+      {[-1.65, -1.35, -1.05, -0.75, 0.75, 1.05, 1.35, 1.65].map((x) => (
+        <Box key={x} args={[0.04, 0.48, 0.04]} position={[x, 0.53, 2.05]} material={m.wood} cast={false} />
+      ))}
       <Sign text="HOME" bg="#7c5238" color="#f7efe0" position={[0, 1.72, 2.1]} width={1.3} height={0.32} />
       <group position={[3.5, 0.15, 1.6]} rotation={[0, -0.6, 0]}>
         <Box args={[1.4, 0.08, 0.45]} position={[0, 0.45, 0]} material={m.wood} />
@@ -323,6 +352,12 @@ export function Workshop() {
         <circleGeometry args={[2.3, 16, 0, Math.PI]} />
       </mesh>
       <Box args={[3.2, 2.3, 0.1]} position={[0, 1.2, -0.12]} material={m.windowWarm} cast={false} />
+      {[-1.65, 1.65].map((x) => (
+        <Box key={x} args={[0.14, 2.4, 0.16]} position={[x, 1.2, -0.08]} material={m.slate} />
+      ))}
+      {[0.5, 1.05, 1.6].map((y) => (
+        <Box key={y} args={[3.2, 0.03, 0.04]} position={[0, y, -0.05]} material={m.slate} cast={false} />
+      ))}
       <Box args={[3.5, 0.15, 0.2]} position={[0, 2.4, -0.05]} material={m.slate} />
       <Sign text="ENGINEERING GARAGE" bg="#f2b84b" color="#2d313b" position={[0, 3.15, 0.05]} width={3.6} height={0.5} />
       {[
@@ -333,7 +368,6 @@ export function Workshop() {
       ))}
       <Box args={[0.8, 0.6, 0.8]} position={[3.7, 0.42, -0.4]} material={m.wood} />
       <Box args={[0.55, 0.45, 0.55]} position={[3.6, 0.95, -0.4]} material={m.woodDark} />
-      <Displays section="projects" style="screen" />
     </group>
   );
 }
@@ -399,7 +433,6 @@ export function CloudDistrict({ accent }: { accent: string }) {
       </group>
       <Cyl args={[0.02, 0.02, 4.2, 4]} position={[-1.8, 4.9, -2.6]} material={m.metal} cast={false} />
       <Sign text="CLOUD DISTRICT" bg="#2d3d5c" color="#bfe3ff" position={[-1.8, 2.15, -1.27]} width={2.8} height={0.44} />
-      <Displays section="devops" style="container" />
     </group>
   );
 }
@@ -421,12 +454,17 @@ export function Observatory({ accent }: { accent: string }) {
       <Cyl args={[2.95, 2.95, 0.18, 16]} position={[0, 2.45, -0.8]} material={m.slate} />
       <group ref={dome} position={[0, 2.5, -0.8]}>
         <mesh material={m.metal} castShadow>
-          <sphereGeometry args={[2.75, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <sphereGeometry args={[2.75, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2]} />
         </mesh>
+        {[0.45, 0.9].map((a) => (
+          <mesh key={a} position={[0, Math.sin(a) * 2.75, 0]} rotation={[Math.PI / 2, 0, 0]} material={m.slate}>
+            <torusGeometry args={[Math.cos(a) * 2.76, 0.03, 6, 64]} />
+          </mesh>
+        ))}
         <Box args={[0.9, 0.25, 2.9]} position={[0, 2.35, 0.65]} rotation={[0.55, 0, 0]} material={m.dark} cast={false} />
         <Cyl args={[0.32, 0.26, 2.6, 12]} position={[0, 2.0, 1.25]} rotation={[0.9, 0, 0]} material={m.cream} />
       </group>
-      <Box args={[1.0, 1.6, 0.1]} position={[0, 0.95, 1.92]} material={m.windowCool} cast={false} />
+      <Window position={[0, 1.0, 1.9]} width={1.0} height={1.5} cool />
       <group position={[3.9, 0.1, -2.2]}>
         <Cyl args={[0.08, 0.12, 3.6, 6]} position={[0, 1.8, 0]} material={m.metal} />
         <group ref={dish} position={[0, 3.6, 0]}>
@@ -442,7 +480,6 @@ export function Observatory({ accent }: { accent: string }) {
       {/* little jetty into the lagoon */}
       <Box args={[1.2, 0.12, 3.4]} position={[-4.8, 0.05, -4.4]} rotation={[0, 0.7, 0]} material={m.wood} />
       <Sign text="RESEARCH ISLAND" bg="#24525e" color="#d8f6ff" position={[0, 2.25, 1.97]} width={2.4} height={0.4} />
-      <Displays section="research" style="holo" />
     </group>
   );
 }
@@ -474,7 +511,7 @@ export function CreativeStudio() {
           <meshStandardMaterial color={c} roughness={0.8} />
         </mesh>
       ))}
-      <Box args={[1.1, 1.8, 0.08]} position={[0, 0.9, -0.96]} material={m.windowWarm} cast={false} />
+      <Window position={[0, 0.95, -0.97]} width={1.2} height={1.8} />
       <Sign text="CREATIVE DISTRICT" bg="#2d313b" color="#ffd6e6" position={[0, 3.55, -0.98]} width={3.2} height={0.5} />
       {/* sculpture */}
       <Cyl args={[0.6, 0.7, 0.6, 8]} position={[4.6, 0.35, -1.6]} material={m.white} />
@@ -482,7 +519,6 @@ export function CreativeStudio() {
         <torusKnotGeometry args={[0.55, 0.16, 64, 8]} />
         <meshStandardMaterial color="#f2b84b" metalness={0.6} roughness={0.3} />
       </mesh>
-      <Displays section="creative" style="frame" />
     </group>
   );
 }
@@ -532,8 +568,12 @@ export function Lighthouse({ reducedMotion }: { reducedMotion: boolean }) {
       })}
       <Cyl args={[1.35, 1.25, 0.16, 14]} position={[0, height + 0.38, -0.5]} material={m.dark} />
       <mesh position={[0, height + 0.85, -0.5]} rotation={[Math.PI / 2, 0, 0]} material={m.dark}>
-        <torusGeometry args={[1.28, 0.03, 4, 20]} />
+        <torusGeometry args={[1.28, 0.025, 8, 48]} />
       </mesh>
+      {Array.from({ length: 24 }, (_, k) => {
+        const a = (k / 24) * Math.PI * 2;
+        return <Box key={k} args={[0.03, 0.4, 0.03]} position={[Math.cos(a) * 1.28, height + 0.65, -0.5 + Math.sin(a) * 1.28]} material={m.dark} cast={false} />;
+      })}
       <Cyl args={[0.75, 0.75, 1.1, 12]} position={[0, height + 1.0, -0.5]} material={m.lamp} cast={false} />
       <mesh position={[0, height + 1.95, -0.5]} material={m.red} castShadow>
         <coneGeometry args={[0.95, 0.85, 12]} />
@@ -554,10 +594,9 @@ export function Lighthouse({ reducedMotion }: { reducedMotion: boolean }) {
         <mesh position={[0, 1.75, 0]} rotation={[0, 0, Math.PI / 2]} material={m.slate} castShadow>
           <cylinderGeometry args={[1.0, 1.0, 2.1, 3, 1]} />
         </mesh>
-        <Box args={[0.5, 0.45, 0.05]} position={[0.45, 0.85, 0.81]} material={m.windowWarm} cast={false} />
+        <Window position={[0.45, 0.85, 0.8]} width={0.52} height={0.48} />
         <Box args={[0.5, 0.9, 0.05]} position={[-0.4, 0.45, 0.81]} material={m.woodDark} cast={false} />
       </group>
-      <CvKiosk />
       {[
         [-2.5, -2.4, 1.1],
         [2.3, -2.9, 0.9],
@@ -569,4 +608,26 @@ export function Lighthouse({ reducedMotion }: { reducedMotion: boolean }) {
       ))}
     </group>
   );
+}
+
+/**
+ * Interactive parts of each landmark (project displays, CV kiosk). Kept separate
+ * from the building models so a custom .glb can replace a building without
+ * losing the clickable content, which is generated from the portfolio config.
+ */
+export function LandmarkInteractives({ id }: { id: SectionId }) {
+  switch (id) {
+    case "projects":
+      return <Displays section="projects" style="screen" />;
+    case "devops":
+      return <Displays section="devops" style="container" />;
+    case "research":
+      return <Displays section="research" style="holo" />;
+    case "creative":
+      return <Displays section="creative" style="frame" />;
+    case "contact":
+      return <CvKiosk />;
+    default:
+      return null;
+  }
 }

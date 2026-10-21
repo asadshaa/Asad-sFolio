@@ -403,6 +403,9 @@ export function buildWorld(quality: QualityTier): World {
     cPad = new Color(P.pad);
   const col = new Color();
   const dir = new Vector3();
+  // Extra colour-only noise: fine variation and dry-grass patches.
+  const tint = createNoise3D(WORLD.seed + 5);
+  const cDry = new Color("#b0aa62");
   for (let i = 0; i < pos.count; i++) {
     dir.fromBufferAttribute(pos, i).normalize();
     const t = s.sampleTerrain(dir.x, dir.y, dir.z);
@@ -412,6 +415,8 @@ export function buildWorld(quality: QualityTier): World {
     positions[i * 3 + 2] = dir.z * r;
 
     col.copy(cGrassA).lerp(cGrassB, smoothstep(-0.5, 0.6, t.detail));
+    col.lerp(cDry, smoothstep(0.35, 0.8, tint(dir.x * 9, dir.y * 9, dir.z * 9)) * 0.55);
+    col.multiplyScalar(0.93 + tint(dir.x * 40 + 3, dir.y * 40, dir.z * 40) * 0.07);
     col.lerp(cDark, smoothstep(0.3, -1.2, t.h) * 0.7);
     col.lerp(cSand, smoothstep(WORLD.waterLevel + 0.7, WORLD.waterLevel + 0.1, t.h));
     col.lerp(cDirt, smoothstep(HW + 2.2, HW + 0.6, t.roadDist) * 0.85);

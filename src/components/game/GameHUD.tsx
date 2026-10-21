@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { CircleHelp, Egg, Hexagon, Map as MapIcon, Menu, Navigation, Sparkles, Volume2, VolumeX } from "lucide-react";
-import { profile, sectionMeta, sectionOrder, type SectionId } from "@/config/portfolio";
+import { gameCopy, profile, sectionMeta, sectionOrder, type SectionId } from "@/config/portfolio";
 import { DESTINATIONS, VEHICLE } from "@/config/world";
 import { displayName } from "@/lib/content";
 import { getWorld } from "@/lib/world/world";
@@ -11,6 +11,7 @@ import { vehicle } from "@/state/runtime";
 import { useGame, type EasterEgg } from "@/state/gameStore";
 import { MiniMap } from "./WorldMap";
 import { Vector3 } from "three";
+import { textOn } from "@/lib/color";
 
 const accentOf = (id: SectionId) => DESTINATIONS.find((d) => d.id === id)?.accent ?? "#d9472f";
 
@@ -95,7 +96,7 @@ function Toasts() {
   const tokenCount = useGame((s) => s.tokens.length);
   const [hidden, setHidden] = useState<number | null>(null);
   const items = [
-    lastDiscovery && { at: lastDiscovery.at, color: accentOf(lastDiscovery.id), icon: Sparkles, text: <><span className="font-semibold">Discovered:</span> {sectionMeta[lastDiscovery.id].place}</> },
+    lastDiscovery && { at: lastDiscovery.at, color: accentOf(lastDiscovery.id), icon: Sparkles, text: <><span className="font-semibold">{gameCopy.discovered}:</span> {sectionMeta[lastDiscovery.id].place}</> },
     lastToken && { at: lastToken.at, color: "#e0a42c", icon: Hexagon, text: <><span className="font-semibold">Engineering token</span> · {tokenCount}/{getWorld().tokens.length}</> },
     lastEgg && { at: lastEgg.at, color: "#7a5af0", icon: Egg, text: <><span className="font-semibold">Easter egg:</span> {EGG_TEXT[lastEgg.id]}</> },
   ].filter(Boolean) as { at: number; color: string; icon: typeof Sparkles; text: React.ReactNode }[];
@@ -118,11 +119,48 @@ function Toasts() {
             exit={{ opacity: 0, y: -8 }}
             className="glass flex items-center gap-3 rounded-full py-2 pl-2 pr-5"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full text-white" style={{ background: last.color }}>
+            <span className="grid h-8 w-8 place-items-center rounded-full" style={{ background: last.color, color: textOn(last.color) }}>
               <last.icon className="h-4 w-4" aria-hidden />
             </span>
             <span className="text-sm">{last.text}</span>
           </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/** One-time "follow the road" hint shown for a few seconds after driving starts. */
+function DrivingHint() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    let shown = false;
+    let timer = 0;
+    const unsub = useGame.subscribe((st, prev) => {
+      if (!shown && st.phase === "driving" && prev.phase === "intro") {
+        shown = true;
+        setShow(true);
+        timer = window.setTimeout(() => setShow(false), 5000);
+      }
+    });
+    return () => {
+      unsub();
+      window.clearTimeout(timer);
+    };
+  }, []);
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-20 z-20 flex justify-center px-4" aria-live="polite">
+      <AnimatePresence>
+        {show && (
+          <motion.p
+            key="hint"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="glass rounded-full px-5 py-2 text-sm font-semibold"
+          >
+            {gameCopy.drivingHint}
+          </motion.p>
         )}
       </AnimatePresence>
     </div>
@@ -189,6 +227,7 @@ export function GameHUD({ touch }: { touch: boolean }) {
       </header>
 
       <Toasts />
+      <DrivingHint />
 
       {/* bottom-left: discoveries + compass */}
       {(driving || phase === "paused") && (
@@ -258,12 +297,12 @@ export function GameHUD({ touch }: { touch: boolean }) {
                   onClick={() => openSection(near)}
                   className="glass pointer-events-auto flex items-center gap-3 rounded-full py-2 pl-2 pr-5 text-left shadow-xl"
                 >
-                  <span className="grid h-10 min-w-10 place-items-center rounded-full px-2 font-display font-bold text-white" style={{ background: accentOf(near) }}>
+                  <span className="grid h-10 min-w-10 place-items-center rounded-full px-2 font-display font-bold" style={{ background: accentOf(near), color: textOn(accentOf(near)) }}>
                     {touch ? <Sparkles className="h-4 w-4" aria-hidden /> : "E"}
                   </span>
                   <span>
                     <span className="block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-                      {touch ? "Tap to explore" : "Press E to explore"}
+                      {touch ? gameCopy.promptTouch : gameCopy.prompt}
                     </span>
                     <span className="block font-display text-lg font-bold leading-tight">
                       {sectionMeta[near].place} · {sectionMeta[near].title}

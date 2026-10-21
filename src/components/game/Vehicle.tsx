@@ -9,7 +9,8 @@ import { dampFactor, moveTowards } from "@/lib/noise";
 import { keys, requests, touchInput, vehicle } from "@/state/runtime";
 import { useGame } from "@/state/gameStore";
 import { sound } from "@/lib/audio";
-import { CarModel } from "./CarModel";
+import { CarModel, ContactShadow, CustomCarRig } from "./CarModel";
+import { ModelSlot } from "./ModelSlot";
 
 const R = WORLD.radius;
 const HW = WORLD.road.halfWidth;
@@ -254,7 +255,10 @@ export function Vehicle() {
 
   return (
     <group ref={root}>
-      <CarModel />
+      <ContactShadow />
+      <ModelSlot name="car" onScene={(scene) => <CustomCarRig scene={scene} />}>
+        <CarModel />
+      </ModelSlot>
     </group>
   );
 }

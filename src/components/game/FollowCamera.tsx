@@ -103,7 +103,7 @@ export function FollowCamera({ reducedMotion }: { reducedMotion: boolean }) {
         // Frame the car between the hero text (left) and the quick-access card (right).
         tmp.subVectors(desiredLook, desiredPos);
         right.crossVectors(tmp, up).normalize();
-        desiredLook.addScaledVector(right, -2.2);
+        desiredLook.addScaledVector(right, -3.1);
       }
       lambdaPos = 1.6;
       lambdaLook = 2.5;

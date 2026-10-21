@@ -1,27 +1,31 @@
-import { CanvasTexture, MeshStandardMaterial, SRGBColorSpace } from "three";
+import { CanvasTexture, MeshPhysicalMaterial, MeshStandardMaterial, SRGBColorSpace, type Texture } from "three";
+import { metalSheetTexture, plasterTexture, roofTexture, stoneTexture, woodTexture } from "@/lib/three/textures";
 
-/** Shared materials for all landmarks (created lazily, once). */
+/** Shared materials for all landmarks (created lazily, once). Smooth PBR with procedural textures. */
 let cache: ReturnType<typeof create> | null = null;
 
 function create() {
-  const std = (color: string, extra: Partial<ConstructorParameters<typeof MeshStandardMaterial>[0]> = {}) =>
-    new MeshStandardMaterial({ color, roughness: 0.82, flatShading: true, ...extra });
+  type Opts = Partial<ConstructorParameters<typeof MeshStandardMaterial>[0]>;
+  const std = (color: string, extra: Opts = {}) => new MeshStandardMaterial({ color, roughness: 0.78, ...extra });
+  const tex = (map: Texture, extra: Opts = {}) => new MeshStandardMaterial({ map, roughness: 0.82, ...extra });
   return {
-    stone: std("#cdbfa6"),
-    stoneDark: std("#9d917f"),
-    wood: std("#b98258"),
-    woodDark: std("#7c5238"),
-    roofRed: std("#b24f3c"),
-    cream: std("#f1e8d6"),
-    white: std("#f5f2ea"),
-    slate: std("#5d6575"),
-    metal: std("#aeb7c2", { metalness: 0.55, roughness: 0.38 }),
-    dark: std("#2d313b"),
-    green: std("#6aa152"),
-    red: std("#d8473a"),
-    glass: std("#9cc7dd", { metalness: 0.3, roughness: 0.15, emissive: "#3b6f8c", emissiveIntensity: 0.25 }),
-    windowWarm: new MeshStandardMaterial({ color: "#ffd99a", emissive: "#ffc46b", emissiveIntensity: 1.4 }),
-    windowCool: new MeshStandardMaterial({ color: "#cfe6ff", emissive: "#9ccaf5", emissiveIntensity: 0.9 }),
+    stone: tex(stoneTexture("#c9bca4", "pave", 6), { roughness: 0.9 }),
+    stoneDark: tex(stoneTexture("#958a79", "rubble", 4), { roughness: 0.95 }),
+    wood: tex(woodTexture("#b07a50"), { roughness: 0.75 }),
+    woodDark: tex(woodTexture("#6f4a33", "wooddark"), { roughness: 0.8 }),
+    roofRed: tex(roofTexture("#a8473a"), { roughness: 0.7 }),
+    cream: tex(plasterTexture("#efe5d2"), { roughness: 0.88 }),
+    white: tex(plasterTexture("#f4f1ea"), { roughness: 0.85 }),
+    slate: std("#4f5767", { roughness: 0.55, metalness: 0.25 }),
+    metal: tex(metalSheetTexture("#a9b2bd"), { metalness: 0.75, roughness: 0.35 }),
+    chrome: std("#dfe3e8", { metalness: 1, roughness: 0.12 }),
+    dark: std("#2a2e37", { roughness: 0.6 }),
+    green: std("#5d9447", { roughness: 0.9 }),
+    red: std("#c23b2e", { roughness: 0.45, metalness: 0.1 }),
+    trim: std("#fbf8f1", { roughness: 0.5 }),
+    glass: new MeshPhysicalMaterial({ color: "#7aa7c2", metalness: 0.1, roughness: 0.06, envMapIntensity: 1.6, clearcoat: 1, emissive: "#24485e", emissiveIntensity: 0.25 }),
+    windowWarm: new MeshStandardMaterial({ color: "#ffd99a", emissive: "#ffc46b", emissiveIntensity: 1.4, roughness: 0.2 }),
+    windowCool: new MeshStandardMaterial({ color: "#cfe6ff", emissive: "#9ccaf5", emissiveIntensity: 0.9, roughness: 0.2 }),
     lamp: new MeshStandardMaterial({ color: "#fff3cf", emissive: "#ffe2a0", emissiveIntensity: 3, toneMapped: false }),
   };
 }

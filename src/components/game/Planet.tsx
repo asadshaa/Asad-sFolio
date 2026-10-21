@@ -27,15 +27,15 @@ export function Planet() {
   return (
     <group>
       <mesh geometry={geometry} receiveShadow castShadow={false}>
-        <meshStandardMaterial vertexColors flatShading roughness={0.96} metalness={0} />
+        <meshStandardMaterial vertexColors roughness={0.95} metalness={0} />
       </mesh>
       <mesh renderOrder={1}>
         <sphereGeometry args={[WORLD.radius + WORLD.waterLevel, 160, 120]} />
         <meshStandardMaterial
           color={waterColor}
           emissive={waterEmissive}
-          emissiveIntensity={0.25}
-          roughness={0.18}
+          emissiveIntensity={0.12}
+          roughness={0.06}
           metalness={0.15}
           transparent
           opacity={0.88}

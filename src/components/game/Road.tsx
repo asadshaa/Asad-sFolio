@@ -29,6 +29,25 @@ function createRoadTexture() {
     ctx.fillStyle = `rgba(${v},${v + 3},${v + 10},0.5)`;
     ctx.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
   }
+  // Repair patches and hairline cracks so the asphalt doesn't look uniform.
+  for (let i = 0; i < 4; i++) {
+    ctx.fillStyle = `rgba(35,37,44,${0.12 + Math.random() * 0.1})`;
+    ctx.fillRect(w * (0.15 + Math.random() * 0.6), Math.random() * h, w * (0.08 + Math.random() * 0.15), h * (0.04 + Math.random() * 0.08));
+  }
+  ctx.strokeStyle = "rgba(25,26,32,0.35)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) {
+    let x = w * (0.1 + Math.random() * 0.8);
+    let y = Math.random() * h;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    for (let k = 0; k < 6; k++) {
+      x += (Math.random() - 0.5) * 14;
+      y += 4 + Math.random() * 10;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
   // Subtle wheel-track wear.
   const wear = ctx.createLinearGradient(0, 0, w, 0);
   wear.addColorStop(0.22, "rgba(255,255,255,0)");

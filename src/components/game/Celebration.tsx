@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Car, Flag, Mail } from "lucide-react";
-import { sectionOrder } from "@/config/portfolio";
+import { gameCopy } from "@/config/portfolio";
 import { getWorld } from "@/lib/world/world";
 import { travelTo } from "@/lib/travel";
 import { sound } from "@/lib/audio";
@@ -48,9 +48,9 @@ export function Celebration() {
               <Flag className="h-5 w-5" aria-hidden />
             </span>
             <h2 id="celebrate-title" className="mt-4 font-display text-2xl font-bold">
-              All {sectionOrder.length} places visited
+              {gameCopy.completionTitle}
             </h2>
-            <p className="mt-2 text-ink-soft">Thanks for exploring. If something here caught your interest, I&apos;d be glad to talk.</p>
+            <p className="mt-2 text-ink-soft">{gameCopy.completion}</p>
             <p className="mt-3 text-sm font-semibold text-ink">
               {tokens}/{totalTokens} tokens · {eggs} easter egg{eggs === 1 ? "" : "s"}
             </p>

@@ -3,6 +3,8 @@
 import { useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
+  DoubleSide,
+  FrontSide,
   InstancedBufferAttribute,
   InstancedMesh,
   MeshStandardMaterial,
@@ -25,6 +27,8 @@ import {
   tuftGeometry,
 } from "@/lib/three/props";
 import { vehicle } from "@/state/runtime";
+import { modelUrl } from "@/config/models";
+import { PropAsset, type PropAssetData } from "./ModelSlot";
 
 /**
  * World streaming: scenery is bucketed into spatial chunks over the sphere.
@@ -52,7 +56,7 @@ interface Chunk {
   radius: number;
 }
 
-function buildChunks(data: InstanceData, geometry: BufferGeometry, material: Material, castShadow: boolean): Chunk[] {
+function buildChunks(data: InstanceData, geometry: BufferGeometry, material: Material | Material[], castShadow: boolean): Chunk[] {
   const buckets: number[][] = chunkCenters.map(() => []);
   const p = new Vector3();
   for (let i = 0; i < data.count; i++) {
@@ -97,56 +101,17 @@ function buildChunks(data: InstanceData, geometry: BufferGeometry, material: Mat
   return chunks;
 }
 
-interface Layer {
-  data: InstanceData;
-  geometry: BufferGeometry;
-  material: Material;
-  castShadow: boolean;
-}
-
-export function WorldStreaming({ shadows }: { shadows: boolean }) {
-  const { layers, chunks, bulbMat } = useMemo(() => {
-    const w = getWorld();
-    const veg = (sway: number) =>
-      applyReveal(new MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.9 }), { sway });
-    const lampMat = applyReveal(new MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.2 }));
-    const bulbMat = applyReveal(
-      new MeshStandardMaterial({ color: "#fff3d6", emissive: "#ffd89a", emissiveIntensity: 2.2, toneMapped: false }),
-    );
-    const layers: Layer[] = [
-      { data: w.pines, geometry: pineGeometry(), material: veg(0.018), castShadow: shadows },
-      { data: w.broadleaf, geometry: broadleafGeometry(), material: veg(0.022), castShadow: shadows },
-      { data: w.rocks, geometry: rockGeometry(), material: veg(0), castShadow: false },
-      { data: w.tufts, geometry: tuftGeometry(), material: veg(0.18), castShadow: false },
-      { data: w.flowers, geometry: flowerGeometry(), material: veg(0.12), castShadow: false },
-      { data: w.lamps, geometry: lampGeometry(), material: lampMat, castShadow: shadows },
-      { data: w.lamps, geometry: lampBulbGeometry(), material: bulbMat, castShadow: false },
-      { data: w.posts, geometry: postGeometry(), material: lampMat, castShadow: false },
-    ];
-    const chunks = layers.flatMap((l) => buildChunks(l.data, l.geometry, l.material, l.castShadow));
-    return { layers, chunks, bulbMat };
-  }, [shadows]);
-
-  useEffect(
-    () => () => {
-      chunks.forEach((c) => c.mesh.dispose());
-      layers.forEach((l) => l.geometry.dispose());
-      new Set(layers.map((l) => l.material)).forEach((m) => m.dispose());
-    },
-    [chunks, layers],
-  );
-
-  useFrame(({ clock }) => {
-    revealUniforms.uRevealCenter.value.copy(vehicle.position);
-    revealUniforms.uTime.value = clock.elapsedTime;
-    bulbMat.emissiveIntensity = 1.4 + lighting.night * 3.4;
+/** One scenery type, chunked and distance-culled every frame. */
+function ChunkLayer({ data, asset, castShadow }: { data: InstanceData; asset: PropAssetData; castShadow: boolean }) {
+  const chunks = useMemo(() => buildChunks(data, asset.geometry, asset.material, castShadow), [data, asset, castShadow]);
+  useEffect(() => () => chunks.forEach((c) => c.mesh.dispose()), [chunks]);
+  useFrame(() => {
     const limit = WORLD.reveal.far + 2;
     for (let i = 0; i < chunks.length; i++) {
       const c = chunks[i];
       c.mesh.visible = c.center.distanceTo(vehicle.position) - c.radius < limit;
     }
   }, -1);
-
   return (
     <group>
       {chunks.map((c, i) => (
@@ -154,4 +119,64 @@ export function WorldStreaming({ shadows }: { shadows: boolean }) {
       ))}
     </group>
   );
+}
+
+const veg = (sway: number, doubleSided = false) =>
+  applyReveal(new MeshStandardMaterial({ vertexColors: true, roughness: 0.88, side: doubleSided ? DoubleSide : FrontSide }), { sway });
+const lampMaterial = () => applyReveal(new MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.55 }));
+
+/**
+ * World streaming: scenery is bucketed into spatial chunks over the sphere.
+ * Chunks beyond the reveal distance are hidden entirely; nearby instances grow
+ * in via the reveal shader. Each prop type can be replaced by a custom .glb
+ * (see config/models.ts).
+ */
+export function WorldStreaming({ shadows }: { shadows: boolean }) {
+  const w = getWorld();
+  const bulbMat = useMemo(
+    () => applyReveal(new MeshStandardMaterial({ color: "#fff3d6", emissive: "#ffd89a", emissiveIntensity: 2.2, toneMapped: false })),
+    [],
+  );
+  useEffect(() => () => bulbMat.dispose(), [bulbMat]);
+  const customLamp = modelUrl("street-lamp") !== null;
+
+  useFrame(({ clock }) => {
+    revealUniforms.uRevealCenter.value.copy(vehicle.position);
+    revealUniforms.uTime.value = clock.elapsedTime;
+    bulbMat.emissiveIntensity = 1.4 + lighting.night * 3.4;
+  }, -1);
+
+  return (
+    <group>
+      <PropAsset name="tree-pine" sway={0.018} build={() => ({ geometry: pineGeometry(), material: veg(0.018) })}>
+        {(a) => <ChunkLayer data={w.pines} asset={a} castShadow={shadows} />}
+      </PropAsset>
+      <PropAsset name="tree-broadleaf" sway={0.022} build={() => ({ geometry: broadleafGeometry(), material: veg(0.022) })}>
+        {(a) => <ChunkLayer data={w.broadleaf} asset={a} castShadow={shadows} />}
+      </PropAsset>
+      <PropAsset name="rock" build={() => ({ geometry: rockGeometry(), material: veg(0) })}>
+        {(a) => <ChunkLayer data={w.rocks} asset={a} castShadow={false} />}
+      </PropAsset>
+      <PropAsset name="grass-tuft" sway={0.18} build={() => ({ geometry: tuftGeometry(), material: veg(0.18, true) })}>
+        {(a) => <ChunkLayer data={w.tufts} asset={a} castShadow={false} />}
+      </PropAsset>
+      <PropAsset name="flower" sway={0.12} build={() => ({ geometry: flowerGeometry(), material: veg(0.12) })}>
+        {(a) => <ChunkLayer data={w.flowers} asset={a} castShadow={false} />}
+      </PropAsset>
+      <PropAsset name="street-lamp" build={() => ({ geometry: lampGeometry(), material: lampMaterial() })}>
+        {(a) => <ChunkLayer data={w.lamps} asset={a} castShadow={shadows} />}
+      </PropAsset>
+      {!customLamp && <BulbLayer data={w.lamps} material={bulbMat} />}
+      <PropAsset name="road-post" build={() => ({ geometry: postGeometry(), material: lampMaterial() })}>
+        {(a) => <ChunkLayer data={w.posts} asset={a} castShadow={false} />}
+      </PropAsset>
+    </group>
+  );
+}
+
+/** Glowing lamp bulbs (built-in lamps only); brighten at night. */
+function BulbLayer({ data, material }: { data: InstanceData; material: Material }) {
+  const asset = useMemo(() => ({ geometry: lampBulbGeometry(), material, custom: false }), [material]);
+  useEffect(() => () => asset.geometry.dispose(), [asset]);
+  return <ChunkLayer data={data} asset={asset} castShadow={false} />;
 }

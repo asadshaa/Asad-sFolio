@@ -26,10 +26,12 @@ import {
   type Group,
 } from "three";
 import { TIME_PRESETS, WORLD } from "@/config/world";
+import { Mesh, PMREMGenerator, Scene, SphereGeometry } from "three";
 import { getWorld } from "@/lib/world/world";
 import { lighting, stepLighting } from "@/lib/three/lighting";
 import { useGame } from "@/state/gameStore";
 import { landmarkMaterials } from "./landmarkMaterials";
+import { PropAsset, type PropAssetData } from "./ModelSlot";
 import { cloudGeometry } from "@/lib/three/props";
 import { createRng } from "@/lib/noise";
 import { vehicle } from "@/state/runtime";
@@ -159,7 +161,8 @@ function Lights({ shadows, shadowMap }: { shadows: boolean; shadowMap: number })
     sun.intensity = lighting.sunIntensity;
     hemi.color.copy(lighting.hemiSky);
     hemi.groundColor.copy(lighting.hemiGround);
-    hemi.intensity = lighting.hemiIntensity;
+    // The reflection map also contributes ambient light, so the hemisphere light is scaled down.
+    hemi.intensity = lighting.hemiIntensity * 0.6;
     (scene.fog as Fog | null)?.color.copy(lighting.fog);
     background.copy(lighting.fog);
     sun.position.copy(vehicle.position).addScaledVector(sunDir, 55);
@@ -173,35 +176,39 @@ function Lights({ shadows, shadowMap }: { shadows: boolean; shadowMap: number })
 
 /* ─────────────────────────── clouds ─────────────────────────── */
 
+const cloudAsset = () => ({
+  geometry: cloudGeometry(),
+  material: new MeshStandardMaterial({
+    vertexColors: true,
+    roughness: 1,
+    emissive: "#ffffff",
+    emissiveIntensity: 0.22,
+    transparent: true,
+    opacity: 0.94,
+  }),
+});
+
+/** Clouds — built-in or a custom "cloud" .glb (see config/models.ts). */
 function Clouds() {
+  return (
+    <PropAsset name="cloud" reveal={false} build={cloudAsset}>
+      {(a) => <CloudLayer asset={a} />}
+    </PropAsset>
+  );
+}
+
+function CloudLayer({ asset }: { asset: PropAssetData }) {
   const ref = useRef<Group>(null);
   const mesh = useMemo(() => {
     const { clouds } = getWorld();
-    const geo = cloudGeometry();
-    const mat = new MeshStandardMaterial({
-      vertexColors: true,
-      flatShading: true,
-      roughness: 1,
-      emissive: "#ffffff",
-      emissiveIntensity: 0.32,
-      transparent: true,
-      opacity: 0.94,
-    });
-    const m = new InstancedMesh(geo, mat, clouds.count);
+    const m = new InstancedMesh(asset.geometry, asset.material, clouds.count);
     m.instanceMatrix.array.set(clouds.matrices.subarray(0, clouds.count * 16));
     m.instanceColor = new InstancedBufferAttribute(clouds.colors.slice(0, clouds.count * 3), 3);
     m.frustumCulled = false;
     return m;
-  }, []);
+  }, [asset]);
 
-  useEffect(
-    () => () => {
-      mesh.geometry.dispose();
-      (mesh.material as MeshStandardMaterial).dispose();
-      mesh.dispose();
-    },
-    [mesh],
-  );
+  useEffect(() => () => mesh.dispose(), [mesh]);
 
   useFrame((_, dt) => {
     if (ref.current) ref.current.rotation.y += dt * 0.006;
@@ -434,6 +441,71 @@ function TimeOfDay({ reducedMotion }: { reducedMotion: boolean }) {
   return null;
 }
 
+/**
+ * Image-based lighting: renders a small sky-gradient scene for the current
+ * time of day into a prefiltered environment map (reflections on paint, glass,
+ * metal and water) and rotates it every frame so "up" in the reflections always
+ * matches the car's local up on the planet.
+ */
+function ReflectionMap() {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const timeOfDay = useGame((s) => s.timeOfDay);
+
+  useEffect(() => {
+    const p = TIME_PRESETS[timeOfDay];
+    const pmrem = new PMREMGenerator(gl);
+    const envScene = new Scene();
+    const geo = new SphereGeometry(10, 48, 24);
+    const mat = new ShaderMaterial({
+      side: BackSide,
+      depthWrite: false,
+      uniforms: {
+        uZenith: { value: new Color(p.skyZenith) },
+        uMid: { value: new Color(p.skyMid) },
+        uHorizon: { value: new Color(p.skyHorizon) },
+        uGround: { value: new Color(p.night > 0.5 ? "#141a24" : "#6e6a60") },
+        uSun: { value: new Color(p.sunColor).multiplyScalar(p.sunIntensity * 0.9) },
+      },
+      vertexShader: /* glsl */ `
+        varying vec3 vDir;
+        void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: /* glsl */ `
+        uniform vec3 uZenith, uMid, uHorizon, uGround, uSun;
+        varying vec3 vDir;
+        void main() {
+          float e = vDir.y;
+          vec3 sky = mix(uHorizon, uMid, smoothstep(0.0, 0.3, e));
+          sky = mix(sky, uZenith, smoothstep(0.25, 0.9, e));
+          vec3 col = mix(uGround, sky, smoothstep(-0.08, 0.02, e));
+          // soft bright patch where the sun usually sits
+          float s = max(dot(vDir, normalize(vec3(0.55, 0.6, 0.4))), 0.0);
+          col += uSun * pow(s, 24.0) * 0.6;
+          gl_FragColor = vec4(col, 1.0);
+        }`,
+    });
+    envScene.add(new Mesh(geo, mat));
+    const rt = pmrem.fromScene(envScene, 0.015);
+    scene.environment = rt.texture;
+    scene.environmentIntensity = p.night > 0.5 ? 0.35 : 0.75;
+    return () => {
+      if (scene.environment === rt.texture) scene.environment = null;
+      rt.dispose();
+      pmrem.dispose();
+      geo.dispose();
+      mat.dispose();
+    };
+  }, [gl, scene, timeOfDay]);
+
+  const q = useMemo(() => new Quaternion(), []);
+  const Y = useMemo(() => new Vector3(0, 1, 0), []);
+  useFrame(() => {
+    q.setFromUnitVectors(Y, vehicle.up);
+    scene.environmentRotation.setFromQuaternion(q);
+  });
+  return null;
+}
+
 export function Environment({
   shadows,
   shadowMap,
@@ -448,6 +520,7 @@ export function Environment({
   return (
     <>
       <TimeOfDay reducedMotion={reducedMotion} />
+      <ReflectionMap />
       <Sky />
       <Lights shadows={shadows} shadowMap={shadowMap} />
       <Clouds />
