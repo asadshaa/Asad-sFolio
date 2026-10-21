@@ -233,7 +233,7 @@ export const profile = {
   seoDescription:
     "Asad Ullah Shah — full-stack developer and software engineer. Explore an interactive 3D world to discover business software, DevOps work, machine-learning projects and freelance concepts.",
   /** Public URL once deployed (used for Open Graph). */
-  siteUrl: "",
+  siteUrl: "https://asad-s-folio.vercel.app",
 };
 
 /** Opening screen copy. */
